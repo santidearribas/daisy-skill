@@ -18,8 +18,6 @@ class Daisy(MycroftSkill):
         self.root_dir = join(self.root_dir)
         self.cred_file = join(self.file_system.path, 'cred')
 
-        LOG.info(self.root_dir)
-
     def getserial(self):
         # Extract serial from cpuinfo file
         cpuserial = "0000000000000000"
@@ -88,6 +86,7 @@ class Daisy(MycroftSkill):
             return "ERROR"    
 
     def check_cred(self):
+        LOG.info(self.root_dir)
         if os.stat(self.cred_file).st_size == 0:
             self.username is None
         else:
