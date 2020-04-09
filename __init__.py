@@ -14,7 +14,10 @@ class Daisy(MycroftSkill):
         self.user_id = ""
         self.username = ""
 
+        self.root_dir = join(self.root_dir)
         self.cred_file = join(self.file_system.path, 'cred')
+
+        LOG.info(self.root_dir)
 
     def getserial(self):
         # Extract serial from cpuinfo file
