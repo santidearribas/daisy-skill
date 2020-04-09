@@ -37,7 +37,7 @@ class Daisy(MycroftSkill):
                 elif user is not None:
                     if self.register_home_assist(user[0]) is "SUCCESS":
                         self.write_cred(user[1])
-                        self.speak("Welcome {}. You have been registered".format(user[1])
+                        self.speak("Welcome {}. You have been registered".format(user[1]))
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
                 else:
