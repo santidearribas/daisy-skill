@@ -10,10 +10,10 @@ import uuid
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
-        self.serial_key = ""
+        self.serial_key = is None
+        self.user_id is None
+        self.username is None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
-        self.user_id = ""
-        self.username = ""
 
         self.cred_file = join(self.root_dir, 'cred')
 
