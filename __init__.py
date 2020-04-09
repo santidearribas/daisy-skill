@@ -80,10 +80,10 @@ class Daisy(MycroftSkill):
             return "ERROR"    
 
     def check_cred(self):
-        if os.stat(cred_file).st_size == 0:
+        if os.stat(credentials).st_size == 0:
             return None
         else:
-            with open(cred_file) as f:
+            with open(credentials) as f:
                 name = f.read()
                 return name
 
