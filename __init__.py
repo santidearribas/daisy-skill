@@ -3,13 +3,18 @@ from mycroft import MycroftSkill, intent_handler
 from mycroft.skills.core import MycroftSkill
 import requests
 import os
+from os.path import join, exists
 import uuid
-
-credentials = "cred"
 
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
+        self.serial_key = ""
+        self.home_assistant_id = str(uuid.uuid4())[0:28]
+        self.user_id = ""
+        self.username = ""
+
+        self.cred_file = join(self.file_system.path, 'cred')
 
     def getserial(self):
         # Extract serial from cpuinfo file
@@ -22,22 +27,22 @@ class Daisy(MycroftSkill):
             f.close()
         except:
             cpuserial = "ERROR000000000"
-        return cpuserial
+        self.serial_key = cpuserial
     
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
-        credentials = self.check_cred()
-        if credentials is None:
+        self.check_cred()
+        if self.username is None:
             response = self.get_response("have you registered on the daisy app")
             if response == "yes":
                 code = self.get_response("whats your code")
-                user = self.check_user(code)
-                if user is None:
+                self.check_user(code)
+                if self.username is None:
                     self.speak("user does not exist. please register on the daisy app and try pairing again with hi daisy")
-                elif user is not None:
-                    if self.register_home_assist(user[0]) is "SUCCESS":
-                        self.write_cred(user[1])
-                        self.speak("Welcome {}. You have been registered".format(user[1]))
+                elif self.username is not None:
+                    if self.register_home_assist() is "SUCCESS":
+                        self.write_cred()
+                        self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
                 else:
@@ -47,7 +52,7 @@ class Daisy(MycroftSkill):
             else:
                 self.speak("invalid response use yes or no. try pairing again with hi daisy")        
         else:
-            self.speak("Welcome {}".format(self.check_cred()))
+            self.speak("Welcome {}".format(self.username))
 
     def check_user(self, code):
         url = "https://daisy-project.herokuapp.com/user/"
@@ -57,20 +62,19 @@ class Daisy(MycroftSkill):
             data_output = output["data"]
             for user in data_output:
                 if user["pair_pin"] == code:
-                    return [user["id"], user["username"]]
+                    self.user_id = user["id"]
+                    self.username = user["username"]
                 else:
-                    return None
+                    self.username is None
         else:
             return "ERROR"
 
-    def register_home_assist(self, user_id):
-        rasp_pi_serial = getserial()
-        home_assistant_id = str(uuid.uuid4())[0:28]
+    def register_home_assist(self):
         data={
-            "id": home_assistant_id,
-            "serial_key": rasp_pi_serial,
+            "id": self.home_assistant_id,
+            "serial_key": self.serial_key,
             "lat_long": "TEST-GPS",
-            "user_ID": user_id
+            "user_ID": self.user_id
         }
         url = "https://daisy-project.herokuapp.com/home-assistant/"
         response = requests.post(url, json=data)
@@ -80,16 +84,16 @@ class Daisy(MycroftSkill):
             return "ERROR"    
 
     def check_cred(self):
-        if os.stat(credentials).st_size == 0:
-            return None
+        if os.stat(self.cred_file).st_size == 0:
+            self.username is None
         else:
-            with open(credentials) as f:
-                name = f.read()
-                return name
+            with open(self.cred_file) as f:
+                username = f.read()
+                self.username = username
 
-    def write_cred(username):
-        with open(credentials, "w") as f:
-            f.write(username)
+    def write_cred(self):
+        with open(self.cred_file, "w") as f:
+            f.write(self.username)
 
 def create_skill():
     return Daisy()
