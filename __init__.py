@@ -26,7 +26,7 @@ class Daisy(MycroftSkill):
     
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
-        credentials = check_cred()
+        credentials = self.check_cred()
         if credentials is None:
             response = self.get_response("have you registered on the daisy app")
             if response == "yes":
