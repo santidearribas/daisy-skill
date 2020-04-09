@@ -1,6 +1,7 @@
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_handler
 from mycroft.skills.core import MycroftSkill
+from mycroft.util.log import LOG
 import requests
 import os
 from os.path import join, exists
