@@ -10,9 +10,9 @@ import uuid
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
-        self.serial_key is None
-        self.user_id is None
-        self.username is None
+        self.serial_key = None
+        self.user_id = None
+        self.username = None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
 
         self.cred_file = join(self.root_dir, 'cred')
@@ -33,7 +33,7 @@ class Daisy(MycroftSkill):
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
         self.check_cred()
-        if self.username is None:
+        if self.username == None:
             response = self.get_response("have you registered on the daisy app")
             if response == "yes":
                 code = self.get_response("whats your code")
@@ -87,7 +87,7 @@ class Daisy(MycroftSkill):
     def check_cred(self):
         LOG.info(self.root_dir)
         if os.stat(self.cred_file).st_size == 0:
-            self.username is None
+            self.username = None
         else:
             with open(self.cred_file) as f:
                 username = f.read()
