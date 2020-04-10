@@ -28,7 +28,7 @@ class Daisy(MycroftSkill):
         self.username = None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
 
-        self.cred_file = join(self.root_dir, 'cred')
+        #self.cred_file = join(self.root_dir, 'cred')
   
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
