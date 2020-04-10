@@ -22,7 +22,7 @@ def getserial():
 
 class Daisy(MycroftSkill):
     def __init__(self):
-        MycroftSkill.__init__(self)
+        super(Daisy, self).__init__()
         self.serial_key = getserial()
         self.user_id = None
         self.username = None
