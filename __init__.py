@@ -32,8 +32,8 @@ class Daisy(MycroftSkill):
     
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
-        LOG.info("Message WORKS!", message)
         self.speak("hi ass")
+        LOG.info("Message WORKS!", message)
         self.check_cred()
         if self.username == None:
             response = self.get_response("have you registered on the daisy app")
