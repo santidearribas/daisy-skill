@@ -10,10 +10,11 @@ import uuid
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
-        self.serial_key = ""
+        self.serial_key = None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
-        self.user_id = ""
-        self.username = ""
+        self.user_id = None
+        self.username = None
+        self.registered = False
 
         self.cred_file = join(self.root_dir, 'cred')
 
@@ -33,16 +34,16 @@ class Daisy(MycroftSkill):
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
         self.check_cred()
-        if self.username is None:
+        if self.registered == False:
             response = self.get_response("have you registered on the daisy app")
             if response == "yes":
                 code = self.get_response("whats your code")
                 self.check_user(code)
-                if self.username is None:
+                if self.registered == False:
                     self.speak("user does not exist. please register on the daisy app and try pairing again with hi daisy")
-                elif self.username is not None:
+                elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
-                        self.write_cred()
+                        self.save_cred()
                         self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
@@ -65,10 +66,11 @@ class Daisy(MycroftSkill):
                 if user["pair_pin"] == code:
                     self.user_id = user["id"]
                     self.username = user["username"]
+                    self.registered = True
                 else:
-                    self.username is None
+                    self.registered = False
         else:
-            return "ERROR"
+            self.registered = "ERROR"
 
     def register_home_assist(self):
         data={
@@ -85,17 +87,23 @@ class Daisy(MycroftSkill):
             return "ERROR"    
 
     def check_cred(self):
-        LOG.info(self.root_dir)
         if os.stat(self.cred_file).st_size == 0:
-            self.username is None
+            self.registered = False
         else:
             with open(self.cred_file) as f:
-                username = f.read()
-                self.username = username
+                cred_dict = f.read()
+                self.user_id = cred_dict["id"]
+                self.username = cred_dict["username"]
+                self.registered = True
 
-    def write_cred(self):
+    def save_cred(self):
+        cred_dict = {
+            "id": self.user_id,
+            "username": self.username
+        }
         with open(self.cred_file, "w") as f:
-            f.write(self.username)
+            f.write(cred_dict)
+            self.registered = True
 
 def create_skill():
     return Daisy()
