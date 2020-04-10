@@ -32,8 +32,6 @@ class Daisy(MycroftSkill):
   
     @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
     def handle_hi_daisy(self, Message):
-        #self.speak("hi ass")
-        LOG.info("Message WORKS! {}".format(Message))
         self.check_cred()
         if self.username == None:
             response = self.get_response("have you registered on the daisy app")
