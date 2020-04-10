@@ -28,11 +28,11 @@ class Daisy(MycroftSkill):
         self.username = None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
 
-        #self.cred_file = join(self.root_dir, 'cred')
+        self.cred_file = join(self.root_dir, 'cred')
   
     @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
     def handle_hi_daisy(self, Message):
-        #self.speak("hi ass")
+        self.speak("hi ass")
         #LOG.info("Message WORKS!", message)
         self.check_cred()
         if self.username == None:
