@@ -30,7 +30,7 @@ class Daisy(MycroftSkill):
 
         #self.cred_file = join(self.root_dir, 'cred')
   
-    @intent_file_handler("hi.daisy.intent")
+    @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
     def handle_hi_daisy(self, Message):
         #self.speak("hi ass")
         #LOG.info("Message WORKS!", message)
