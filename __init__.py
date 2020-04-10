@@ -22,7 +22,7 @@ def getserial():
 
 class Daisy(MycroftSkill):
     def __init__(self):
-        super(Daisy, self).__init__()
+        MycroftSkill.__init__(self)
         self.serial_key = getserial()
         self.user_id = None
         self.username = None
@@ -32,7 +32,7 @@ class Daisy(MycroftSkill):
   
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
-        self.speak("hi ass")
+        #self.speak("hi ass")
         #LOG.info("Message WORKS!", message)
         self.check_cred()
         if self.username == None:
