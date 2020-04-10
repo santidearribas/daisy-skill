@@ -7,29 +7,29 @@ import os
 from os.path import join, exists
 import uuid
 
+def getserial():
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:6]=='Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR000000000"
+    return cpuserial
+
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
-        self.serial_key = None
+        self.serial_key = getserial()
         self.user_id = None
         self.username = None
         self.home_assistant_id = str(uuid.uuid4())[0:28]
 
         self.cred_file = join(self.root_dir, 'cred')
-
-    def getserial(self):
-        # Extract serial from cpuinfo file
-        cpuserial = "0000000000000000"
-        try:
-            f = open('/proc/cpuinfo','r')
-            for line in f:
-                if line[0:6]=='Serial':
-                    cpuserial = line[10:26]
-            f.close()
-        except:
-            cpuserial = "ERROR000000000"
-        self.serial_key = cpuserial
-    
+  
     @intent_file_handler("hi.daisy.intent")
     def handle_hi_daisy(self, message):
         self.speak("hi ass")
