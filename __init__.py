@@ -70,14 +70,11 @@ class Daisy(MycroftSkill):
                     self.user_id = user["id"]
                     self.username = user["username"]
                     self.registered = True
-                    return True
-                    LOG.info('USER EXISTS')
+                    LOG.info('USER EXISTS')                 
                 else:
-                    return False
                     LOG.info('USER DOES NOT EXIST')
         else:
             self.registered = "ERROR"
-            return "Error"
             LOG.info('Check User Error Occured')
 
     def register_home_assist(self):
