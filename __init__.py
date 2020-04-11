@@ -72,6 +72,7 @@ class Daisy(MycroftSkill):
                     self.registered = False
         else:
             self.registered = "ERROR"
+            LOG.info('Check User Error Occured')
 
     def register_home_assist(self):
         data={
@@ -85,7 +86,8 @@ class Daisy(MycroftSkill):
         if response.status_code == 200:
             return "SUCCESS"
         else:
-            return "ERROR"    
+            return "ERROR"
+            LOG.info('Register Home Assistant Error Occured')  
 
     def check_cred(self):
         if os.stat(self.cred_file).st_size == 0:
