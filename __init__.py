@@ -6,6 +6,7 @@ import requests
 import os
 from os.path import join, exists
 import uuid
+import json
 
 class Daisy(MycroftSkill):
     def __init__(self):
@@ -91,7 +92,7 @@ class Daisy(MycroftSkill):
             self.registered = False
         else:
             with open(self.cred_file) as f:
-                cred_dict = f.read()
+                cred_dict = json.load(f)
                 self.user_id = cred_dict["id"]
                 self.username = cred_dict["username"]
                 self.registered = True
@@ -102,7 +103,7 @@ class Daisy(MycroftSkill):
             "username": self.username
         }
         with open(self.cred_file, "w") as f:
-            f.write(cred_dict)
+            json.dump(cred_dict, f)
             self.registered = True
 
 def create_skill():
