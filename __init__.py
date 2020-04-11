@@ -58,18 +58,22 @@ class Daisy(MycroftSkill):
             self.speak("Welcome {}".format(self.username))
 
     def check_user(self, code):
+        LOG.info('CODE: {}'.format(code))
         url = "https://daisy-project.herokuapp.com/user/"
         response = requests.get(url)
         if response.status_code == 200:
             output = response.json()
             data_output = output["data"]
+            LOG.info('OUTPUT: {}'.format(data_output))
             for user in data_output:
                 if user["pair_pin"] == code:
                     self.user_id = user["id"]
                     self.username = user["username"]
                     self.registered = True
+                    LOG.info('USER EXISTS')
                 else:
                     self.registered = False
+                    LOG.info('USER DOES NOT EXIST')
         else:
             self.registered = "ERROR"
             LOG.info('Check User Error Occured')
