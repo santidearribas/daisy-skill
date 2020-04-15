@@ -111,5 +111,13 @@ class Daisy(MycroftSkill):
             json.dump(cred_dict, f)
             self.registered = True
 
+    def initialize(self):
+        self.add_event('open',
+                   self.handler_open)
+
+    def handler_open(self, message):
+        LOG.info('OPEN MESSAGE RECIEVED')  
+    # code to excecute when open message detected...
+
 def create_skill():
     return Daisy()
