@@ -29,8 +29,9 @@ class Daisy(MycroftSkill):
         self.user_id = None
         self.username = None
         self.registered = False
-
-        self.cred_file = join(self.root_dir, 'cred')
+        
+        self.update_gps = join(self.root_dir, 'daisy-scripts/update_gps.py')
+        self.cred_file = join(self.root_dir, 'daisy-scripts/cred')
 
     @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
     def handle_hi_daisy(self, Message):
@@ -56,6 +57,7 @@ class Daisy(MycroftSkill):
                 self.speak("invalid response use yes or no. try pairing again with hi daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
+            self.update_location()
 
     def check_user(self, code):
         LOG.info('CODE: {}'.format(code))
@@ -116,8 +118,16 @@ class Daisy(MycroftSkill):
                    self.handler_open)
 
     def handler_open(self, message):
-        LOG.info('OPEN MESSAGE RECIEVED')  
+        #LOG.info('OPEN MESSAGE RECIEVED')
+        LOG.info("CRED FILE:", self.cred_file)
+        #LOG.info("ROOT DIR:", self.root_dir)
+        #LOG.info("DAISY SCRIPTS", join(self.root_dir, "daisy-scripts"))
+ 
     # code to excecute when open message detected...
+
+    def update_location(self):
+        os.system("python " + self.update_gps)
+        LOG.info("GPS updated")
 
 def create_skill():
     return Daisy()
