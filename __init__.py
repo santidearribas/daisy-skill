@@ -48,6 +48,7 @@ class Daisy(MycroftSkill):
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
                         self.start_question_check()
+                        self.update_location()
                         self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
@@ -73,8 +74,9 @@ class Daisy(MycroftSkill):
                     self.user_id = user["id"]
                     self.username = user["username"]
                     self.registered = True
-                else:
-                    self.registered = False
+                    return True
+            self.registered = False
+            return False
         else:
             self.registered = "ERROR"
             LOG.info('Check User Error Occured')
@@ -106,7 +108,6 @@ class Daisy(MycroftSkill):
                 cred_dict = json.load(f)
                 self.user_id = cred_dict["id"]
                 self.username = cred_dict["username"]
-                self.start_question_check()
                 self.registered = True
 
     def save_cred(self):
