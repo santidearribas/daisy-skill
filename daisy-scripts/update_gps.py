@@ -14,6 +14,13 @@ def return_user_id(cred_file):
         cred_dict = json.load(f)
     return cred_dict["id"]
 
+def get_home_assistant_id(base_url, user_id):
+    url = base_url + user_id
+    response = requests.get(url)
+    data = response.json()
+    home_assistant_id = data["id"]
+    return home_assistant_id
+
 def put_request(url, payload):
     headers = {'content-type': 'application/json'}
     requests.put(url, json=payload, headers=headers)
@@ -31,7 +38,8 @@ def get_gps():
 def convert_tup_to_str(tup):
     return str(tup[0]) + "," + str(tup[1])
 
-def put_gps(url):
+def put_gps(base_url, home_assistant_id):
+    url = base_url + home_assistant_id
     payload = {}
     while True:
         gps_val = get_gps()
@@ -48,10 +56,11 @@ def main():
     print("Running...")
     root_dir = "/opt/mycroft/skills/daisy-skill/daisy-scripts"
     cred_file = join(root_dir, "cred")
-    base_url = "https://daisy-project.herokuapp.com/home-assistant/"
+    home_assistant_user_url = "https://daisy-project.herokuapp.com/home-assistant/user/"
+    home_assistant_base_url = "https://daisy-project.herokuapp.com/home-assistant/"
     user_id = return_user_id(cred_file)
-    url = base_url + user_id
-    put_gps(url)
+    home_assistant_id = get_home_assistant_id(home_assistant_user_url, user_id)
+    put_gps(home_assistant_base_url, home_assistant_id)
     logs = root_dir + "/access_logs.txt"
     myFile = open(logs, "a")
     myFile.write("\nUPDATE_GPS.PY: Accessed on " + str(datetime.now()))
