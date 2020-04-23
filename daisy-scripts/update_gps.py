@@ -10,9 +10,12 @@ import json
 from datetime import datetime
 
 def return_user_id(cred_file):
-    with open(cred_file) as f:
-        cred_dict = json.load(f)
-    return cred_dict["id"]
+    if os.stat(cred_file).st_size == 0:
+        return None
+    else:
+        with open(cred_file) as f:
+            cred_dict = json.load(f)
+        return cred_dict["id"]
 
 def get_home_assistant_id(base_url, user_id):
     url = base_url + user_id
@@ -59,11 +62,14 @@ def main():
     home_assistant_user_url = "https://daisy-project.herokuapp.com/home-assistant/user/"
     home_assistant_base_url = "https://daisy-project.herokuapp.com/home-assistant/"
     user_id = return_user_id(cred_file)
-    home_assistant_id = get_home_assistant_id(home_assistant_user_url, user_id)
-    put_gps(home_assistant_base_url, home_assistant_id)
-    logs = root_dir + "/access_logs.txt"
-    myFile = open(logs, "a")
-    myFile.write("\nUPDATE_GPS.PY: Accessed on " + str(datetime.now()))
+    if user_id is not None:
+        home_assistant_id = get_home_assistant_id(home_assistant_user_url, user_id)
+        put_gps(home_assistant_base_url, home_assistant_id)
+        logs = root_dir + "/access_logs.txt"
+        myFile = open(logs, "a")
+        myFile.write("\nUPDATE_GPS.PY: Accessed on " + str(datetime.now()))
+    else:
+        pass
 
 if __name__ == "__main__":
     main()

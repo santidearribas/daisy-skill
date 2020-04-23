@@ -29,7 +29,8 @@ class Daisy(MycroftSkill):
         self.user_id = None
         self.username = None
         self.registered = False
-        
+
+        self.ask_question = join(self.root_dir, 'daisy-scripts/cron.py')        
         self.update_gps = join(self.root_dir, 'daisy-scripts/update_gps.py')
         self.cred_file = join(self.root_dir, 'daisy-scripts/cred')
 
@@ -46,6 +47,7 @@ class Daisy(MycroftSkill):
                 elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
+                        self.start_question_check()
                         self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
@@ -66,15 +68,13 @@ class Daisy(MycroftSkill):
         if response.status_code == 200:
             output = response.json()
             data_output = output["data"]
-            LOG.info('OUTPUT: {}'.format(data_output))
             for user in data_output:
                 if user["pair_pin"] == code:
                     self.user_id = user["id"]
                     self.username = user["username"]
                     self.registered = True
-                    LOG.info('USER EXISTS')                 
                 else:
-                    LOG.info('USER DOES NOT EXIST')
+                    self.registered = False
         else:
             self.registered = "ERROR"
             LOG.info('Check User Error Occured')
@@ -92,7 +92,11 @@ class Daisy(MycroftSkill):
             return "SUCCESS"
         else:
             return "ERROR"
-            LOG.info('Register Home Assistant Error Occured')  
+            LOG.info('Register Home Assistant Error Occured')
+
+    def start_question_check(self):
+        os.system("python " + self.ask_question)
+        LOG.info("Question cron job started...")
 
     def check_cred(self):
         if os.stat(self.cred_file).st_size == 0:
@@ -102,6 +106,7 @@ class Daisy(MycroftSkill):
                 cred_dict = json.load(f)
                 self.user_id = cred_dict["id"]
                 self.username = cred_dict["username"]
+                self.start_question_check()
                 self.registered = True
 
     def save_cred(self):
@@ -116,6 +121,10 @@ class Daisy(MycroftSkill):
     def initialize(self):
         self.add_event('open',
                    self.handler_open)
+        self.add_event('question', self.handler_question)
+
+    def handler_question(self, message):
+        LOG.info('QUESTION RECEIVED!')
 
     def handler_open(self, message):
         #LOG.info('OPEN MESSAGE RECIEVED')
