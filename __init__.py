@@ -120,16 +120,21 @@ class Daisy(MycroftSkill):
             self.registered = True
 
     def initialize(self):
-        self.add_event('open',
-                   self.handler_open)
+        #self.add_event('open',
+         #          self.handler_open)
         self.add_event('question', self.handler_question)
+        #self.add_event('recognizer_loop:wake_up',self.handler_wake_up)
+    
+    #def handler_wake_up(self, message):
+    #    LOG.info("NEW LOGS!")
 
     def handler_question(self, message):
         LOG.info('QUESTION RECEIVED!')
+        self.speak("You have a new question!")
 
-    def handler_open(self, message):
+    #def handler_open(self, message):
         #LOG.info('OPEN MESSAGE RECIEVED')
-        LOG.info("CRED FILE:", self.cred_file)
+        #LOG.info("CRED FILE:", self.cred_file)
         #LOG.info("ROOT DIR:", self.root_dir)
         #LOG.info("DAISY SCRIPTS", join(self.root_dir, "daisy-scripts"))
  

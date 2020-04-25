@@ -1,9 +1,11 @@
 #!/home/pi/mycroft-core/.venv/bin/python
 
+import subprocess
 import requests
 import math
 import os
 import json
+from datetime import datetime
 
 def get_user_id():
     root_dir = "/opt/mycroft/skills/daisy-skill/daisy-scripts/"
@@ -115,8 +117,9 @@ def set_device(device, user_id):
     base_url = "https://daisy-project.herokuapp.com/user-details/user/"
     url = base_url + user_id
     headers = {"content-type": "application/json"}
-    payload = {"ask_question": False, "device_to_use": device, "user_availability": False}
-    requests.put(url, json=payload, headers=headers)
+    payload = {"ask_question": False, "device_to_use": device, "user_available": False}
+    response = requests.put(url, json=payload, headers=headers)
+    print(response.json())
 
 #If questions are being asked, old questions are no longer needed
 #Wipe previous file and add questions
@@ -128,11 +131,16 @@ def save_details(questions_dict):
         json.dump(questions_dict, f)
 
 def prompt_mycroft():
-    os.system("python3 -m mycroft.messagebus.send 'question'")
+    os.system("sh /opt/mycroft/skills/daisy-skill/daisy-scripts/ask_question.sh")
+    #subprocess.call(['./ask_question.sh'])
     #send notification to picroft
 
 def main():
     print("Checking for questions...")
+    root_dir = "/opt/mycroft/skills/daisy-skill/daisy-scripts"
+    logs = root_dir + "/access_logs.txt"
+    myFile = open(logs, "a")
+    myFile.write("\nGET_QUESTIONS.PY: Accessed on " + str(datetime.now()))
     user_details_user_url = "https://daisy-project.herokuapp.com/user-details/user/"
     questions_url = "https://daisy-project.herokuapp.com/question/"
     answers_url = "https://daisy-project.herokuapp.com/answer/"
@@ -144,14 +152,15 @@ def main():
     questions_id_lst = check_true_questions(user_id)
     if user_id is not None and questions_id_lst is not None: #check if there are any questions
         print("Found questions to ask!")
-        #test_dist = 9.9 #to use for testing purposes and checking if the system picks the right device
+        test_dist = 9.9 #to use for testing purposes and checking if the system picks the right device
         dist = find_dist(phone_gps, home_assistant_gps)
         user_availability = check_user(user_id)
-        if choose_device(dist, user_availability) == "home-assistant":
+        if choose_device(test_dist, user_availability) == "home-assistant":
             print("Sending to home-assistant...")
             questions_dict = get_questions(questions_id_lst)
             question_answers_dict = questions_answers(questions_dict)
             print("Saving questions...")
+            print(question_answers_dict)
             save_details(question_answers_dict)
             set_device("home-assistant", user_id)
             prompt_mycroft()
