@@ -1,3 +1,4 @@
+from datetime import datetime
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_handler
 from mycroft.skills.core import MycroftSkill
@@ -26,13 +27,17 @@ class Daisy(MycroftSkill):
         MycroftSkill.__init__(self)
         self.serial_key = getserial()
         self.home_assistant_id = str(uuid.uuid4())[0:28]
+        self.answers_returned_id = str(uuid.uuid4())[0:28]
         self.user_id = None
         self.username = None
         self.registered = False
+        self.questions_answers = {}
+        self.answers = []
 
         self.ask_question = join(self.root_dir, 'daisy-scripts/cron.py')        
         self.update_gps = join(self.root_dir, 'daisy-scripts/update_gps.py')
         self.cred_file = join(self.root_dir, 'daisy-scripts/cred')
+        self.questions_file = join(self.root_dir, 'daisy-scripts/questions')
 
     @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
     def handle_hi_daisy(self, Message):
@@ -85,7 +90,7 @@ class Daisy(MycroftSkill):
         data={
             "id": self.home_assistant_id,
             "serial_key": self.serial_key,
-            "lat_long": "TEST-GPS",
+            "lat_long": "PLACEHOLDER",
             "user_ID": self.user_id
         }
         url = "https://daisy-project.herokuapp.com/home-assistant/"
@@ -120,25 +125,59 @@ class Daisy(MycroftSkill):
             self.registered = True
 
     def initialize(self):
-        #self.add_event('open',
-         #          self.handler_open)
         self.add_event('question', self.handler_question)
-        #self.add_event('recognizer_loop:wake_up',self.handler_wake_up)
     
-    #def handler_wake_up(self, message):
-    #    LOG.info("NEW LOGS!")
-
     def handler_question(self, message):
         LOG.info('QUESTION RECEIVED!')
         self.speak("You have a new question!")
+        with open(self.questions_file) as f:
+            questions_dict = json.load(f)
+            self.questions_answers = questions_dict
+            self.ask_questions()
 
-    #def handler_open(self, message):
-        #LOG.info('OPEN MESSAGE RECIEVED')
-        #LOG.info("CRED FILE:", self.cred_file)
-        #LOG.info("ROOT DIR:", self.root_dir)
-        #LOG.info("DAISY SCRIPTS", join(self.root_dir, "daisy-scripts"))
- 
-    # code to excecute when open message detected...
+    def ask_questions(self):
+        LOG.info(self.questions_answers)
+        response = self.get_response("You have {} questions. Are you ready to answer?".format(len(self.questions_answers)))
+        if response == "no":
+            #send to phone
+            self.speak("Question has been sent to your phone. Please respond when you are available")
+            base_url = "https://daisy-project.herokuapp.com/user-details/user/"
+            url = base_url + self.user_id
+            headers = {"content-type": "application/json"}
+            payload = {"ask_question": False, "device_to_use": "phone", "user_available": False}
+            requests.put(url, json=payload, headers=headers)
+        elif response == "yes":
+            self.speak("Ok here are your questions")
+            #save question
+            for i, question in enumerate(self.questions_answers):
+                self.speak("Question {} {}".format(i+1, self.questions_answers[question][0]))
+                self.speak("Here are your responses")
+                answers_index = []
+                for i, answer in enumerate(self.questions_answers[question][1]):
+                    self.speak("Response {} {}".format(i+1, self.questions_answers[question][1][answer]))
+                    answers_index.append(answer)
+                answer_number = self.get_response("Which answer do you pick? State a number")
+                self.answers.append(answers_index[int(answer_number)-1])
+            send_questions()
+        else:
+            self.speak("Could not understand please respond with yes or no")
+            self.ask_question()
+
+    def send_questions(self):
+        url = "https://daisy-project.herokuapp.com/answer-returned/"
+        for answer in self.answers:
+            data = {
+                "id": self.answers_returned_id,
+                "user_ID": self.user_id,
+                "answer_ID": answer,
+                "answer_time": str(datetime.now()),
+                "device_used": "home-assistant"
+            }
+            requests.post(url, json=data)
+            if response.status_code == 200:
+                LOG.info("Responses sent SUCCESS")
+            else:
+                LOG.info("Responses sending FAILED")
 
     def update_location(self):
         os.system("python " + self.update_gps)
