@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_handler
@@ -8,6 +9,7 @@ import os
 from os.path import join, exists
 import uuid
 import json
+from word2number import w2n
 
 def getserial():
     # Extract serial from cpuinfo file
@@ -32,9 +34,10 @@ class Daisy(MycroftSkill):
         self.username = None
         self.registered = False
         self.questions_answers = {}
-        self.answers = []
+        self.answers = {}
 
-        self.ask_question = join(self.root_dir, 'daisy-scripts/cron.py')        
+        self.start_cron = join(self.root_dir, 'daisy-scripts/cron.py')
+        self.ask_questions_bool = False
         self.update_gps = join(self.root_dir, 'daisy-scripts/update_gps.py')
         self.cred_file = join(self.root_dir, 'daisy-scripts/cred')
         self.questions_file = join(self.root_dir, 'daisy-scripts/questions')
@@ -52,7 +55,7 @@ class Daisy(MycroftSkill):
                 elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
-                        self.start_question_check()
+                        self.start_cron()
                         self.update_location()
                         self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
@@ -65,7 +68,21 @@ class Daisy(MycroftSkill):
                 self.speak("invalid response use yes or no. try pairing again with hi daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
-            self.update_location()
+            #self.update_location()
+            self.get_questions()
+            if self.ask_questions_bool == False:
+                LOG.info("YOU HAVE NO QUESTIONS")
+                self.speak("You have no questions.")
+            else:
+                LOG.info("YOU HAVE QUESTIONS")
+                #response = self.get_response("You have questions. Are you ready to answer")
+                #LOG.info(response)
+                #if response == "yes":
+                #    LOG.info("YES")
+                #    self.speak("Ok")
+                #else:
+                #    self.speak("Nah")
+                self.ask_questions()
 
     def check_user(self, code):
         LOG.info('CODE: {}'.format(code))
@@ -126,6 +143,17 @@ class Daisy(MycroftSkill):
 
     def initialize(self):
         self.add_event('question', self.handler_question)
+
+    def get_questions(self):
+        if os.stat(self.questions_file).st_size == 0:
+            self.ask_questions_bool = False
+            return False
+        else:
+            with open(self.questions_file) as f:
+                questions_dict = json.load(f)
+                self.questions_answers = questions_dict
+                self.ask_questions_bool = True
+                return True
     
     def handler_question(self, message):
         LOG.info('QUESTION RECEIVED!')
@@ -136,48 +164,70 @@ class Daisy(MycroftSkill):
             self.ask_questions()
 
     def ask_questions(self):
-        LOG.info(self.questions_answers)
-        response = self.get_response("You have {} questions. Are you ready to answer?".format(len(self.questions_answers)))
+        LOG.info("Asking questions...")
+        #response = self.get_response("You have {} questions. Are you ready to answer?".format(len(self.questions_answers)))
+        response = self.get_response("You have new questions would you like to answer")
+        #LOG.info(response)
         if response == "no":
-            #send to phone
-            self.speak("Question has been sent to your phone. Please respond when you are available")
-            base_url = "https://daisy-project.herokuapp.com/user-details/user/"
-            url = base_url + self.user_id
-            headers = {"content-type": "application/json"}
-            payload = {"ask_question": False, "device_to_use": "phone", "user_available": False}
-            requests.put(url, json=payload, headers=headers)
+            LOG.info("Responses sent to phone...")
+            self.send_to_phone()
         elif response == "yes":
+            LOG.info("Asking home assistant...")
             self.speak("Ok here are your questions")
-            #save question
-            for i, question in enumerate(self.questions_answers):
-                self.speak("Question {} {}".format(i+1, self.questions_answers[question][0]))
-                self.speak("Here are your responses")
-                answers_index = []
-                for i, answer in enumerate(self.questions_answers[question][1]):
-                    self.speak("Response {} {}".format(i+1, self.questions_answers[question][1][answer]))
-                    answers_index.append(answer)
-                answer_number = self.get_response("Which answer do you pick? State a number")
-                self.answers.append(answers_index[int(answer_number)-1])
-            send_questions()
+            time.sleep(1)
+            self.ask_via_home_assistant()
+            self.speak("Responses recorded")
+            self.send_questions()
         else:
-            self.speak("Could not understand please respond with yes or no")
-            self.ask_question()
+            self.speak("Could not understand please respond with yes or no. Start again with Hi Daisy.")
 
     def send_questions(self):
+        LOG.info("Sending questions...")
+        LOG.info("All Answers", self.answers)
         url = "https://daisy-project.herokuapp.com/answer-returned/"
         for answer in self.answers:
+            LOG.info("Answer", answer)
             data = {
                 "id": self.answers_returned_id,
                 "user_ID": self.user_id,
                 "answer_ID": answer,
-                "answer_time": str(datetime.now()),
+                "answer_time": self.answers[answer],
                 "device_used": "home-assistant"
             }
-            requests.post(url, json=data)
+            LOG.info("Data:", data)
+            response = requests.post(url, json=data)
             if response.status_code == 200:
                 LOG.info("Responses sent SUCCESS")
+                open(self.questions_file, 'w').close() #wipe file
             else:
                 LOG.info("Responses sending FAILED")
+    
+    def ask_via_home_assistant(self):
+        for i, question in enumerate(self.questions_answers):
+            self.speak("Question {} {}".format(i+1, self.questions_answers[question][0]))
+            time.sleep(1)
+            self.speak("Here are your responses")
+            answers_index = []
+            for i, answer in enumerate(self.questions_answers[question][1]):
+                self.speak("Response {} {}".format(i+1, self.questions_answers[question][1][answer]))
+                answers_index.append(answer)
+                time.sleep(0.5)
+            answer_number = self.get_response("Which answer do you pick State a number")
+            self.speak("Your answer has been logged")
+            LOG.info("Answer picked: ", answer_number)
+            LOG.info("Answer", answer)
+            self.answers[answers_index[w2n.word_to_num(answer_number)-1]] = str(datetime.now())
+            LOG.debug("Answers: ", self.answers)
+            LOG.info(answer_number)
+    
+    def send_to_phone(self):
+        self.speak("Question has been sent to your phone. Please respond when you are available")
+        base_url = "https://daisy-project.herokuapp.com/user-details/user/"
+        url = base_url + self.user_id
+        headers = {"content-type": "application/json"}
+        payload = {"ask_question": False, "device_to_use": "phone", "user_available": False}
+        requests.put(url, json=payload, headers=headers)
+        e
 
     def update_location(self):
         os.system("python " + self.update_gps)
