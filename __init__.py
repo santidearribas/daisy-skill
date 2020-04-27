@@ -55,7 +55,7 @@ class Daisy(MycroftSkill):
                 elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
-                        self.start_cron()
+                        self.start_cron_job()
                         self.update_location()
                         self.speak("Welcome {}. You have been registered".format(self.username))
                     else:
@@ -68,20 +68,10 @@ class Daisy(MycroftSkill):
                 self.speak("invalid response use yes or no. try pairing again with hi daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
-            #self.update_location()
             self.get_questions()
             if self.ask_questions_bool == False:
-                LOG.info("YOU HAVE NO QUESTIONS")
                 self.speak("You have no questions.")
             else:
-                LOG.info("YOU HAVE QUESTIONS")
-                #response = self.get_response("You have questions. Are you ready to answer")
-                #LOG.info(response)
-                #if response == "yes":
-                #    LOG.info("YES")
-                #    self.speak("Ok")
-                #else:
-                #    self.speak("Nah")
                 self.ask_questions()
 
     def check_user(self, code):
@@ -118,8 +108,8 @@ class Daisy(MycroftSkill):
             return "ERROR"
             LOG.info('Register Home Assistant Error Occured')
 
-    def start_question_check(self):
-        os.system("python " + self.ask_question)
+    def start_cron_job(self):
+        os.system("python " + self.start_cron)
         LOG.info("Question cron job started...")
 
     def check_cred(self):
@@ -157,17 +147,13 @@ class Daisy(MycroftSkill):
     
     def handler_question(self, message):
         LOG.info('QUESTION RECEIVED!')
-        self.speak("You have a new question!")
         with open(self.questions_file) as f:
             questions_dict = json.load(f)
             self.questions_answers = questions_dict
             self.ask_questions()
 
     def ask_questions(self):
-        LOG.info("Asking questions...")
-        #response = self.get_response("You have {} questions. Are you ready to answer?".format(len(self.questions_answers)))
         response = self.get_response("You have new questions would you like to answer")
-        #LOG.info(response)
         if response == "no":
             LOG.info("Responses sent to phone...")
             self.send_to_phone()
@@ -183,10 +169,8 @@ class Daisy(MycroftSkill):
 
     def send_questions(self):
         LOG.info("Sending questions...")
-        LOG.info("All Answers", self.answers)
         url = "https://daisy-project.herokuapp.com/answer-returned/"
         for answer in self.answers:
-            LOG.info("Answer", answer)
             data = {
                 "id": self.answers_returned_id,
                 "user_ID": self.user_id,
@@ -194,7 +178,6 @@ class Daisy(MycroftSkill):
                 "answer_time": self.answers[answer],
                 "device_used": "home-assistant"
             }
-            LOG.info("Data:", data)
             response = requests.post(url, json=data)
             if response.status_code == 200:
                 LOG.info("Responses sent SUCCESS")
@@ -207,18 +190,20 @@ class Daisy(MycroftSkill):
             self.speak("Question {} {}".format(i+1, self.questions_answers[question][0]))
             time.sleep(1)
             self.speak("Here are your responses")
-            answers_index = []
             for i, answer in enumerate(self.questions_answers[question][1]):
                 self.speak("Response {} {}".format(i+1, self.questions_answers[question][1][answer]))
-                answers_index.append(answer)
                 time.sleep(0.5)
-            answer_number = self.get_response("Which answer do you pick State a number")
+            logged_answer = self.get_response("Which response do you pick")
+            self.save_answer(question, logged_answer)
             self.speak("Your answer has been logged")
-            LOG.info("Answer picked: ", answer_number)
-            LOG.info("Answer", answer)
-            self.answers[answers_index[w2n.word_to_num(answer_number)-1]] = str(datetime.now())
-            LOG.debug("Answers: ", self.answers)
-            LOG.info(answer_number)
+
+    def save_answer(self, question, logged_answer):
+        for answer_id, answer in self.questions_answers[question][1].items():
+            if logged_answer == answer:
+                self.answers[answer_id] = str(datetime.now())[:19]
+                return True
+            else:
+                return False
     
     def send_to_phone(self):
         self.speak("Question has been sent to your phone. Please respond when you are available")
