@@ -42,22 +42,22 @@ class Daisy(MycroftSkill):
         self.cred_file = join(self.root_dir, 'daisy-scripts/cred')
         self.questions_file = join(self.root_dir, 'daisy-scripts/questions')
 
-    @intent_handler(IntentBuilder('HiDaisy').require('Hi').require('Daisy'))
-    def handle_hi_daisy(self, Message):
+    @intent_handler(IntentBuilder('StartDaisy').require('Start').require('Daisy'))
+    def handle_start_daisy(self, Message):
         self.check_cred()
         if self.registered == False:
-            response = self.get_response("have you registered on the daisy app")
+            response = self.get_response("Hi have you registered on the daisy app")
             if response == "yes":
-                code = self.get_response("whats your code")
+                code = self.get_response("Whats your pair code")
                 self.check_user(code)
                 if self.registered == False:
-                    self.speak("user does not exist. please register on the daisy app and try pairing again with hi daisy")
+                    self.speak("User does not exist. Please register on the daisy app and try pairing again with hi daisy")
                 elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
-                        self.start_cron_job()
                         self.update_location()
                         self.speak("Welcome {}. You have been registered".format(self.username))
+                        self.start_cron_job()
                     else:
                         self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
                 else:
@@ -75,14 +75,15 @@ class Daisy(MycroftSkill):
                 self.ask_questions()
 
     def check_user(self, code):
-        LOG.info('CODE: {}'.format(code))
+        formatted_code = "".join(code.split()).upper()
+        LOG.info('CODE: {}'.format(formatted_code))
         url = "https://daisy-project.herokuapp.com/user/"
         response = requests.get(url)
         if response.status_code == 200:
             output = response.json()
             data_output = output["data"]
             for user in data_output:
-                if user["pair_pin"] == code:
+                if user["pair_pin"] == formatted_code:
                     self.user_id = user["id"]
                     self.username = user["username"]
                     self.registered = True
@@ -134,6 +135,11 @@ class Daisy(MycroftSkill):
     def initialize(self):
         self.add_event('question', self.handler_question)
 
+    def handler_question(self, message):
+        LOG.info('QUESTION RECEIVED!')
+        self.get_questions()
+        self.ask_questions()
+
     def get_questions(self):
         if os.stat(self.questions_file).st_size == 0:
             self.ask_questions_bool = False
@@ -145,13 +151,6 @@ class Daisy(MycroftSkill):
                 self.ask_questions_bool = True
                 return True
     
-    def handler_question(self, message):
-        LOG.info('QUESTION RECEIVED!')
-        with open(self.questions_file) as f:
-            questions_dict = json.load(f)
-            self.questions_answers = questions_dict
-            self.ask_questions()
-
     def ask_questions(self):
         response = self.get_response("You have new questions would you like to answer")
         if response == "no":
@@ -189,13 +188,13 @@ class Daisy(MycroftSkill):
         for i, question in enumerate(self.questions_answers):
             self.speak("Question {} {}".format(i+1, self.questions_answers[question][0]))
             time.sleep(1)
-            self.speak("Here are your responses")
-            for i, answer in enumerate(self.questions_answers[question][1]):
-                self.speak("Response {} {}".format(i+1, self.questions_answers[question][1][answer]))
+            self.speak("Your responses are")
+            for answer in self.questions_answers[question][1]:
+                self.speak("{}".format(self.questions_answers[question][1][answer]))
                 time.sleep(0.5)
             logged_answer = self.get_response("Which response do you pick")
             self.save_answer(question, logged_answer)
-            self.speak("Your answer has been logged")
+            self.speak("Your response {} has been logged". format(logged_answer))
 
     def save_answer(self, question, logged_answer):
         for answer_id, answer in self.questions_answers[question][1].items():
