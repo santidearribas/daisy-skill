@@ -152,10 +152,10 @@ def main():
     questions_id_lst = check_true_questions(user_id)
     if user_id is not None and questions_id_lst is not None: #check if there are any questions
         print("Found questions to ask!")
-        test_dist = 9.9 #to use for testing purposes and checking if the system picks the right device
+        #test_dist = 9.9 #to use for testing purposes and checking if the system picks the right device
         dist = find_dist(phone_gps, home_assistant_gps)
         user_availability = check_user(user_id)
-        if choose_device(test_dist, user_availability) == "home-assistant":
+        if choose_device(dist, user_availability) == "home-assistant":
             print("Sending to home-assistant...")
             questions_dict = get_questions(questions_id_lst)
             question_answers_dict = questions_answers(questions_dict)
