@@ -1,3 +1,0 @@
-#prompt picroft
-
-import os
