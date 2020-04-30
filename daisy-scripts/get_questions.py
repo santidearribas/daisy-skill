@@ -79,11 +79,15 @@ def questions_answers(questions_dict):
     return questions_answers
 
 def get_gps(base_url, user_id):
-    url = base_url + user_id
-    response = requests.get(url)
-    data = response.json()
-    latlng = data["lat_long"]
-    return latlng
+    user_url = base_url + "user/" + user_id
+    while True:
+        response = requests.get(user_url)
+        data = response.json()
+        if data["lat_long"] == "PLACEHOLDER": #for home assistant
+            home_assistant_url = base_url + data["id"]
+            requests.delete(home_assistant_url)
+        else:
+            return data["lat_long"]
 
 def find_dist(gps1, gps2):
     earth_radius = 6373.0
@@ -100,8 +104,7 @@ def find_dist(gps1, gps2):
 
     a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    distance_in_km = earth_radius * c
-    distance_in_m = distance_in_km * 1000
+    distance_in_m = earth_radius * c
 
     return distance_in_m
 
@@ -144,11 +147,11 @@ def main():
     user_details_user_url = "https://daisy-project.herokuapp.com/user-details/user/"
     questions_url = "https://daisy-project.herokuapp.com/question/"
     answers_url = "https://daisy-project.herokuapp.com/answer/"
-    phone_user_url = "https://daisy-project.herokuapp.com/phone/user/"
-    home_assistant_user_url = "https://daisy-project.herokuapp.com/home-assistant/user/"
+    phone_url = "https://daisy-project.herokuapp.com/phone/"
+    home_assistant_url = "https://daisy-project.herokuapp.com/home-assistant/"
     user_id = get_user_id()
-    phone_gps = get_gps(phone_user_url, user_id)
-    home_assistant_gps = get_gps(home_assistant_user_url, user_id)
+    phone_gps = get_gps(phone_url, user_id)
+    home_assistant_gps = get_gps(home_assistant_url, user_id)
     questions_id_lst = check_true_questions(user_id)
     if user_id is not None and questions_id_lst is not None: #check if there are any questions
         print("Found questions to ask!")

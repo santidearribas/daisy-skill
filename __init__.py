@@ -46,7 +46,7 @@ class Daisy(MycroftSkill):
     def handle_start_daisy(self, Message):
         self.check_cred()
         if self.registered == False:
-            response = self.get_response("Hi have you registered on the daisy app")
+            response = self.get_response("Hi, have you registered on the daisy app")
             if response == "yes":
                 code = self.get_response("Whats your pair code")
                 self.check_user(code)
@@ -63,9 +63,9 @@ class Daisy(MycroftSkill):
                 else:
                     self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
             elif response == "no":
-                self.speak("please register on the daisy app and try pairing again with hi daisy")
+                self.speak("Please register on the daisy app and try pairing again with hi daisy")
             else:
-                self.speak("invalid response use yes or no. try pairing again with hi daisy")        
+                self.speak("Invalid response use yes or no. try pairing again with hi daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
             self.get_questions()
@@ -75,14 +75,17 @@ class Daisy(MycroftSkill):
                 self.ask_questions()
 
     def check_user(self, code):
-        formatted_code = "".join(code.split()).upper()
+        formatted_code = code.replace('-', '').replace(' ', '')
         LOG.info('CODE: {}'.format(formatted_code))
         url = "https://daisy-project.herokuapp.com/user/"
         response = requests.get(url)
         if response.status_code == 200:
             output = response.json()
             data_output = output["data"]
+            LOG.info(data_output)
             for user in data_output:
+                LOG.info(user["pair_pin"])
+                LOG.info(formatted_code)
                 if user["pair_pin"] == formatted_code:
                     self.user_id = user["id"]
                     self.username = user["username"]
