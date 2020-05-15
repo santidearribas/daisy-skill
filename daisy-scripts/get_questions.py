@@ -44,9 +44,12 @@ def check_user(user_id):
     response = requests.get(url)
     data_lst = response.json()
     for item in data_lst:
-        if item["user_available"] == True:
+        if item["user_available"] == "True":
             return True
-    return False
+        elif item["user_available"] == "False":
+            return False
+        else:
+            return None
 
 #Pull the actual questions and their ids:
 #{id: question}
@@ -153,11 +156,11 @@ def main():
     phone_gps = get_gps(phone_url, user_id)
     home_assistant_gps = get_gps(home_assistant_url, user_id)
     questions_id_lst = check_true_questions(user_id)
-    if user_id is not None and questions_id_lst is not None: #check if there are any questions
+    user_availability = check_user(user_id)
+    if user_id is not None and questions_id_lst is not None and user_availability is not None: #check if there are any questions
         print("Found questions to ask!")
         #test_dist = 9.9 #to use for testing purposes and checking if the system picks the right device
         dist = find_dist(phone_gps, home_assistant_gps)
-        user_availability = check_user(user_id)
         if choose_device(dist, user_availability) == "home-assistant":
             print("Sending to home-assistant...")
             questions_dict = get_questions(questions_id_lst)
