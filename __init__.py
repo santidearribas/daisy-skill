@@ -47,12 +47,12 @@ class Daisy(MycroftSkill):
     def handle_start_daisy(self, Message):
         self.check_cred()
         if self.registered == False:
-            response = self.get_response("Hi, have you registered on the daisy app")
-            if response == "yes":
+            response = ask_yesno("Hi, have you registered on the daisy app")
+            if voc_match(response, 'yes'):
                 code = self.get_response("Whats your pair code")
                 self.check_user(code)
                 if self.registered == False:
-                    self.speak("User does not exist. Please register on the daisy app and try pairing again with hi daisy")
+                    self.speak("User does not exist. Please register on the daisy app and try pairing again with Hi Daisy")
                 elif self.registered == True:
                     if self.register_home_assist() is "SUCCESS":
                         self.save_cred()
@@ -60,24 +60,24 @@ class Daisy(MycroftSkill):
                         self.speak("Welcome {}. You have been registered".format(self.username))
                         self.start_cron_job()
                     else:
-                        self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
+                        self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
                 else:
-                    self.speak("There has been an error. Please wait and try pairing again with hi daisy later")
-            elif response == "no":
-                self.speak("Please register on the daisy app and try pairing again with hi daisy")
+                    self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
+            if voc_match(response, 'no'):
+                self.speak("Please register on the daisy app and try pairing again with Hi Daisy")
             else:
-                self.speak("Invalid response use yes or no. try pairing again with hi daisy")        
+                self.speak("Invalid response use yes or no. Try pairing again with Hi Daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
             self.get_questions()
             if self.ask_questions_bool == False:
-                self.speak("You have no questions.")
+                self.speak("You have no new questions.")
             else:
                 self.ask_questions()
 
     def check_user(self, code):
         formatted_code = code.replace('-', '').replace(' ', '')
-        LOG.info('CODE: {}'.format(formatted_code))
+        #LOG.info('CODE: {}'.format(formatted_code))
         url = "https://daisy-project.herokuapp.com/user/"
         response = requests.get(url)
         if response.status_code == 200:
@@ -156,11 +156,12 @@ class Daisy(MycroftSkill):
                 return True
     
     def ask_questions(self):
-        response = self.get_response("You have new questions would you like to answer")
-        if response == "no":
+        self.check_cred()
+        response = ask_yesno("You have new questions would you like to answer")
+        if voc_match(response, 'no'):
             LOG.info("Responses sent to phone...")
             self.send_to_phone()
-        elif response == "yes":
+        if voc_match(response, 'yes'):
             LOG.info("Asking home assistant...")
             self.speak("Ok here are your questions")
             time.sleep(1)
@@ -172,7 +173,8 @@ class Daisy(MycroftSkill):
 
     def send_questions(self):
         LOG.info("Sending questions...")
-        url = "https://daisy-project.herokuapp.com/answer-returned/"
+        ar_url = "https://daisy-project.herokuapp.com/answer-returned/"
+        ud_url = "https://daisy-project.herokuapp.com/user-details/"
         for answer in self.answers:
             data = {
                 "id": self.answers_returned_id,
@@ -181,10 +183,11 @@ class Daisy(MycroftSkill):
                 "answer_time": self.answers[answer],
                 "device_used": "home-assistant"
             }
-            response = requests.post(url, json=data)
+            response = requests.post(ar_url, json=data)
             if response.status_code == 200:
                 LOG.info("Responses sent SUCCESS")
                 open(self.questions_file, 'w').close() #wipe file
+                requests.delete(ud_url + self.user_id)
             else:
                 LOG.info("Responses sending FAILED")
     
