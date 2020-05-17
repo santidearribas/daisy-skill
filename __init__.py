@@ -27,6 +27,7 @@ def getserial():
 class Daisy(MycroftSkill):
     def __init__(self):
         MycroftSkill.__init__(self)
+        self.reload_skill = False
         self.serial_key = getserial()
         self.home_assistant_id = str(uuid.uuid4())[0:28]
         self.answers_returned_id = str(uuid.uuid4())[0:28]

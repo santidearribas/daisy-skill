@@ -15,14 +15,11 @@ def readString():
         line = ser.readline().decode("utf-8")  # Read the entire string
         return line
 
-
 def getTime(string, format, returnFormat):
     return time.strftime(returnFormat,
                          time.strptime(string, format))  # Convert date and time to a nice printable format
 
-
 def getLatLng(latString, lngString):
-    #return latString, lngString
     negate_lat = 1
     negate_lng = 1
     if "S" in latString:
@@ -37,8 +34,6 @@ def getLatLng(latString, lngString):
     min_lng = lng_lst[1].lstrip("0")
     lat = (deg_lat + float(min_lat[0] + "." + min_lat[1:]) / 60) * negate_lat
     lng = (deg_lng + float(min_lng[0] + "." + min_lng[1:]) / 60) * negate_lng
-    #lat = latString[:2].lstrip('0') + "." + "%.7s" % str(float(latString[2:]) / 60.0 * negate_lat).lstrip("0.")
-    #lng = lngString[:3].lstrip('0') + "." + "%.7s" % str(float(lngString[3:]) / 60.0 * negate_lng).lstrip("0.")
     return lat, lng
 
 def printRMC(lines):
