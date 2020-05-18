@@ -187,7 +187,7 @@ class Daisy(MycroftSkill):
             if response.status_code == 200:
                 LOG.info("Responses sent SUCCESS")
                 open(self.questions_file, 'w').close() #wipe file
-                requests.delete(ud_url + self.user_id)
+                self.delete_user(self.user_id)
             else:
                 LOG.info("Responses sending FAILED")
     
@@ -201,7 +201,7 @@ class Daisy(MycroftSkill):
                 time.sleep(0.5)
             logged_answer = self.get_response("Which response do you pick")
             self.save_answer(question, logged_answer)
-            self.speak("Your response {} has been logged". format(logged_answer.upper()))
+            self.speak("Your response {} has been logged". format(logged_answer.capitalize()))
 
     def save_answer(self, question, logged_answer):
         for answer_id, answer in self.questions_answers[question][1].items():
@@ -218,7 +218,18 @@ class Daisy(MycroftSkill):
         headers = {"content-type": "application/json"}
         payload = {"ask_question": False, "device_to_use": "phone", "user_available": False}
         requests.put(url, json=payload, headers=headers)
-        e
+
+    def delete_user(self, user_id):
+        base_url = "https://daisy-project.herokuapp.com/user-details/"
+        delete_ids = []
+        url = base_url + "user/" + user_id
+        response = requests.get(url)
+        data = response.json()
+        for user in data:
+            delete_ids.append(user["id"])
+        for id in delete_ids:
+            requests.delete(base_url + id)
+            return "SUCCESS"
 
     def update_location(self):
         os.system("python " + self.update_gps)
