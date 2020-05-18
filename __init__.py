@@ -47,7 +47,7 @@ class Daisy(MycroftSkill):
     def handle_start_daisy(self, Message):
         self.check_cred()
         if self.registered == False:
-            response = ask_yesno("Hi, have you registered on the daisy app", data=None)
+            response = self.ask_yesno("Hi, have you registered on the daisy app", data=None)
             if voc_match(response, 'yes'):
                 code = self.get_response("Whats your pair code")
                 self.check_user(code)
@@ -157,7 +157,7 @@ class Daisy(MycroftSkill):
     
     def ask_questions(self):
         self.check_cred()
-        response = ask_yesno("You have new questions would you like to answer", data=None)
+        response = self.ask_yesno("You have new questions would you like to answer", data=None)
         if voc_match(response, 'no'):
             LOG.info("Responses sent to phone...")
             self.send_to_phone()
