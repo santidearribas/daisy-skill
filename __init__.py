@@ -48,7 +48,7 @@ class Daisy(MycroftSkill):
         self.check_cred()
         if self.registered == False:
             response = self.ask_yesno("Hi, have you registered on the daisy app", data=None)
-            if voc_match(response, 'yes'):
+            if self.voc_match(response, 'yes'):
                 code = self.get_response("Whats your pair code")
                 self.check_user(code)
                 if self.registered == False:
@@ -63,7 +63,7 @@ class Daisy(MycroftSkill):
                         self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
                 else:
                     self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
-            if voc_match(response, 'no'):
+            if self.voc_match(response, 'no'):
                 self.speak("Please register on the daisy app and try pairing again with Hi Daisy")
             else:
                 self.speak("Invalid response use yes or no. Try pairing again with Hi Daisy")        
@@ -158,10 +158,10 @@ class Daisy(MycroftSkill):
     def ask_questions(self):
         self.check_cred()
         response = self.ask_yesno("You have new questions would you like to answer", data=None)
-        if voc_match(response, 'no'):
+        if self.voc_match(response, 'no'):
             LOG.info("Responses sent to phone...")
             self.send_to_phone()
-        if voc_match(response, 'yes'):
+        if self.voc_match(response, 'yes'):
             LOG.info("Asking home assistant...")
             self.speak("Ok here are your questions")
             time.sleep(1)
