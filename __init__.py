@@ -201,11 +201,11 @@ class Daisy(MycroftSkill):
                 time.sleep(0.5)
             logged_answer = self.get_response("Which response do you pick")
             self.save_answer(question, logged_answer)
-            self.speak("Your response {} has been logged". format(logged_answer))
+            self.speak("Your response {} has been logged". format(logged_answer.upper()))
 
     def save_answer(self, question, logged_answer):
         for answer_id, answer in self.questions_answers[question][1].items():
-            if logged_answer == answer:
+            if logged_answer.lower() == answer.lower():
                 self.answers[answer_id] = str(datetime.now())[:19]
                 return True
             else:
