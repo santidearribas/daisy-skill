@@ -63,10 +63,10 @@ class Daisy(MycroftSkill):
                         self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
                 else:
                     self.speak("There has been an error. Please wait and try pairing again with Hi Daisy later")
-            if self.voc_match(response, 'no'):
+            elif self.voc_match(response, 'no'):
                 self.speak("Please register on the daisy app and try pairing again with Hi Daisy")
             else:
-                self.speak("Invalid response use yes or no. Try pairing again with Hi Daisy")        
+                self.speak("Could not understand please use yes or no. Try pairing again with Hi Daisy")        
         else:
             self.speak("Welcome {}".format(self.username))
             self.get_questions()
